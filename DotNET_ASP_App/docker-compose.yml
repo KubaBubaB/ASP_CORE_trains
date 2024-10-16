@@ -1,0 +1,42 @@
+﻿version: "3.8"
+services:
+  mongo:
+    image: mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    restart: unless-stopped
+
+  mqtt5:
+    image: eclipse-mosquitto
+    container_name: mqtt5
+    ports:
+      - "1883:1883"  # for TCP
+      - "9001:9001"  # for WebSockets (optional)
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:rw  # Mount the custom config directory
+      - data:/mosquitto/data:rw
+      - log:/mosquitto/log:rw
+    command: >
+      sh -c "
+      touch /mosquitto/config/pwfile &&
+      mosquitto_passwd -b /mosquitto/config/pwfile user1 password1 &&
+      mosquitto_passwd -b /mosquitto/config/pwfile user2 password2 &&
+      mosquitto -c /mosquitto/config/mosquitto.conf
+      "
+    restart: unless-stopped
+
+volumes:
+  mongodata:
+    driver: local
+  config:
+  data:
+  log:
+
+networks:
+  default:
+    name: mqtt5-network
