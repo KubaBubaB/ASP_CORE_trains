@@ -22,6 +22,11 @@ app.MapGet("/sensors", () => sensorController.GetAllSensorsData());
 app.MapGet("/sensors/{category}", (string category) => sensorController.GetOneCategoryResponse(category));
 app.MapGet("/sensors/{category}/{id}", (string category, int id) => sensorController.GetOneSensorResponse(category, id));
 app.MapGet("/sensors/sorted/{isAscending}", (bool isAscending) => sensorController.GetAllSensorsDataSorted(isAscending));
+app.MapGet("/sensors/sorted/{category}/{isAscending}", (string category, bool isAscending) => sensorController.GetOneCategorySorted(category, isAscending));
+app.MapGet("/sensors/sorted/{category}/{id}/{isAscending}", (string category, int id, bool isAscending) => sensorController.GetOneSensorSorted(category, id, isAscending));
+app.MapGet("/sensors/sorted/date/{isAscending}", (bool isAscending) => sensorController.GetAllSensorsDataSortByDate(isAscending));
+app.MapGet("/sensors/sorted/date/{category}/{isAscending}", (string category, bool isAscending) => sensorController.GetOneCategorySortByDate(category, isAscending));
+app.MapGet("/sensors/sorted/date/{category}/{id}/{isAscending}", (string category, int id, bool isAscending) => sensorController.GetOneSensorSortByDate(category, id, isAscending));
 // END MAP GET SENSORS
 
 // START MAP PUT

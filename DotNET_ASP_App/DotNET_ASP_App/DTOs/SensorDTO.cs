@@ -2,13 +2,11 @@
 
 public class SensorDTO
 {
-    public string Id { get; set; }
-    
     public string SensorType { get; set; }
       
     public int SensorId { get; set; }
 
     public string Data { get; set; }
-    
-    public DateTime Date { get; set; }
+    // FORMAT: "DD/MM/YYYY HH:MM:SS"
+    public string DateTime { get; set; }
 }

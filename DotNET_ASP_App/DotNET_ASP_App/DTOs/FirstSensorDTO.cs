@@ -7,4 +7,6 @@ public record FirstSensorDTO
     public int SensorId { get; set; }
     
     public string Data { get; set; }
+    
+    public DateTime DateTime { get; set; }
 }

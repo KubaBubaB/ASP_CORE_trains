@@ -7,4 +7,6 @@ public record FourthSensorDTO
     public int SensorId { get; set; }
 
     public bool Data { get; set; }
+    
+    public DateTime DateTime { get; set; }
 }

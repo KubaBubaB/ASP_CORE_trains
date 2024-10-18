@@ -35,6 +35,31 @@ public class SensorController
         return SensorService.GetAllSensorsDataSorted(isAscending);
     }
     
+    public GetOneCategoryResponse GetOneCategorySorted(string category, bool isAscending)
+    {
+        return SensorService.GetOneCategorySorted(category, isAscending);
+    }
+    
+    public GetOneCategoryResponse GetOneSensorSorted(string category, int id, bool isAscending)
+    {
+        return SensorService.GetOneSensorSorted(category, id, isAscending);
+    }
+
+    public GetAllSensorsResponse GetAllSensorsDataSortByDate(bool isAscending)
+    {
+        return SensorService.GetAllSensorsDataSortByDate(isAscending);
+    }
+    
+    public GetOneCategoryResponse GetOneCategorySortByDate(string category, bool isAscending)
+    {
+        return SensorService.GetOneCategorySortByDate(category, isAscending);
+    }
+    
+    public GetOneCategoryResponse GetOneSensorSortByDate(string category, int id, bool isAscending)
+    {
+        return SensorService.GetOneSensorSortByDate(category, id, isAscending);
+    }
+    
     public void DropDB()
     {
         MongoRepo.GetInstance().EraseDB();
