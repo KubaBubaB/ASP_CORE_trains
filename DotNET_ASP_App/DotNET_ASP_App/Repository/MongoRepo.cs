@@ -19,8 +19,14 @@ public class MongoRepo
         return instance;
     }
     
-    public void SaveSensorData(SensorDTO sensorData)
+    public void SaveSensorData(SensorDTO sensorData, bool alt)
     {
+        if (alt)
+        {
+            sensorData.Id = Guid.NewGuid().ToString();
+            mongo.GetCollection<SensorDTO>(sensorData.SensorType).InsertOne(sensorData);
+            return;
+        }
         switch (sensorData.SensorType)
         {
             case "FirstSensor":
