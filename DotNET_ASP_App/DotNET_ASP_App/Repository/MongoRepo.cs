@@ -1,4 +1,5 @@
 ﻿using DotNET_ASP_App.DTOs;
+using DotNET_ASP_App.Sensors;
 using MongoDB.Driver;
 
 namespace DotNET_ASP_App.Repository;
@@ -19,35 +20,29 @@ public class MongoRepo
         return instance;
     }
     
-    public void SaveSensorData(SensorDTO sensorData, bool alt)
+    public void SaveSensorData(SensorDTO sensorData)
     {
-        if (alt)
+        try
         {
-            sensorData.Id = Guid.NewGuid().ToString();
-            mongo.GetCollection<SensorDTO>(sensorData.SensorType).InsertOne(sensorData);
-            return;
+            if (new List<string> { "Temperature", "Vibration", "Humidity", "Pressure" }.Contains(sensorData.SensorType))
+            {
+                mongo.GetCollection<Sensor>(sensorData.SensorType).InsertOne(new Sensor
+                {
+                    Id = Guid.NewGuid(),
+                    SensorType = sensorData.SensorType,
+                    SensorId = sensorData.SensorId,
+                    Data = sensorData.Data,
+                    DateTime = DateTime.Parse(sensorData.DateTime)
+                });
+            }
+            else
+            {
+                throw new FormatException("Unknown sensor type of " + sensorData.SensorType);
+            }
         }
-        switch (sensorData.SensorType)
+        catch (FormatException ex)
         {
-            case "FirstSensor":
-                FirstSensorDTO data = new FirstSensorDTO{Data = sensorData.Data, SensorId = sensorData.SensorId, Id = Guid.NewGuid()};
-                mongo.GetCollection<FirstSensorDTO>("FirstSensor").InsertOne(data);
-                break;
-            case "SecondSensor":
-                SecondSensorDTO data2 = new SecondSensorDTO{Data = double.Parse(sensorData.Data, System.Globalization.CultureInfo.InvariantCulture), SensorId = sensorData.SensorId, Id = Guid.NewGuid()};
-                mongo.GetCollection<SecondSensorDTO>("SecondSensor").InsertOne(data2);
-                break;
-            case "ThirdSensor":
-                ThirdSensorDTO data3 = new ThirdSensorDTO{Data = int.Parse(sensorData.Data), SensorId = sensorData.SensorId, Id = Guid.NewGuid()};
-                mongo.GetCollection<ThirdSensorDTO>("ThirdSensor").InsertOne(data3);
-                break;
-            case "FourthSensor":
-                FourthSensorDTO data4 = new FourthSensorDTO{Data = Boolean.Parse(sensorData.Data), SensorId = sensorData.SensorId, Id = Guid.NewGuid()};
-                mongo.GetCollection<FourthSensorDTO>("FourthSensor").InsertOne(data4);
-                break;
-            default:
-                Console.WriteLine("Unknown sensor type.");
-                break;
+            Console.WriteLine(ex.Message);
         }
     }
 
@@ -56,60 +51,63 @@ public class MongoRepo
         MongoDBHandler.GetClient().DropDatabase("DOTNET");
     }
     
-    public List<SensorDTO> GetAllSensors()
+    public List<SensorDTO> GetAllSensorsDTO()
     {
         List<SensorDTO> sensors = new();
-        sensors.AddRange(mongo.GetCollection<FirstSensorDTO>("FirstSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "FirstSensor", SensorId = x.SensorId, Data = x.Data }));
-        sensors.AddRange(mongo.GetCollection<SecondSensorDTO>("SecondSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "SecondSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-        sensors.AddRange(mongo.GetCollection<ThirdSensorDTO>("ThirdSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "ThirdSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-        sensors.AddRange(mongo.GetCollection<FourthSensorDTO>("FourthSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "FourthSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
+        sensors.AddRange(mongo.GetCollection<Sensor>("Temperature").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "Temperature", SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime.ToString("yyyy-MM-dd HH:mm:ss") }));
+        sensors.AddRange(mongo.GetCollection<Sensor>("Vibration").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "Vibration", SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime.ToString("yyyy-MM-dd HH:mm:ss") }));
+        sensors.AddRange(mongo.GetCollection<Sensor>("Humidity").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "Humidity", SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime.ToString("yyyy-MM-dd HH:mm:ss") }));
+        sensors.AddRange(mongo.GetCollection<Sensor>("Pressure").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "Pressure", SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime.ToString("yyyy-MM-dd HH:mm:ss") }));
+        return sensors;
+    }
+
+    public SensorAgregation GetAllSensors()
+    {
+        SensorAgregation sensors = new();
+        sensors.TemperatureSensors = mongo.GetCollection<Sensor>("Temperature").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
+        sensors.VibrationSensors = mongo.GetCollection<Sensor>("Vibration").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
+        sensors.HumiditySensors = mongo.GetCollection<Sensor>("Humidity").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
+        sensors.PressureSensors = mongo.GetCollection<Sensor>("Pressure").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
         return sensors;
     }
     
-    public List<SensorDTO> GetOneCategory(string category)
+    public record SensorAgregation
+    {
+        public List<Sensor> TemperatureSensors { get; set; }
+        public List<Sensor> VibrationSensors { get; set; }
+        public List<Sensor> HumiditySensors { get; set; }
+        public List<Sensor> PressureSensors { get; set; }
+    }
+    
+    public List<Sensor> GetOneCategory(string collectionName)
+    {
+        return mongo.GetCollection<Sensor>(collectionName).Find(_ => true).ToList();
+    }
+    
+    public List<SensorDTO> GetOneCategoryDTO(string category)
     {
         List<SensorDTO> sensors = new();
-        switch (category)
+        try
         {
-            case "FirstSensor":
-                sensors.AddRange(mongo.GetCollection<FirstSensorDTO>("FirstSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "FirstSensor", SensorId = x.SensorId, Data = x.Data }));
-                break;
-            case "SecondSensor":
-                sensors.AddRange(mongo.GetCollection<SecondSensorDTO>("SecondSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "SecondSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-                break;
-            case "ThirdSensor":
-                sensors.AddRange(mongo.GetCollection<ThirdSensorDTO>("ThirdSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "ThirdSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-                break;
-            case "FourthSensor":
-                sensors.AddRange(mongo.GetCollection<FourthSensorDTO>("FourthSensor").Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = "FourthSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-                break;
-            default:
-                Console.WriteLine("Unknown sensor type.");
-                break;
+            sensors.AddRange(mongo.GetCollection<Sensor>(category).Find(_ => true).ToList().Select(x => new SensorDTO { SensorType = x.SensorType, SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime.ToString("yyyy-MM-dd HH:mm:ss") }));
+        }
+        catch (FormatException ex)
+        {
+            Console.WriteLine(ex.Message);
         }
         return sensors;
     }
     
-    public List<SensorDTO> GetOneSensor(string category, int id)
+    public List<SensorDTO> GetOneSensorDTO(string category, int id)
     {
         List<SensorDTO> sensors = new();
-        switch (category)
+        try
         {
-            case "FirstSensor":
-                sensors.AddRange(mongo.GetCollection<FirstSensorDTO>("FirstSensor").Find(x => x.SensorId == id).ToList().Select(x => new SensorDTO { SensorType = "FirstSensor", SensorId = x.SensorId, Data = x.Data }));
-                break;
-            case "SecondSensor":
-                sensors.AddRange(mongo.GetCollection<SecondSensorDTO>("SecondSensor").Find(x => x.SensorId == id).ToList().Select(x => new SensorDTO { SensorType = "SecondSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-                break;
-            case "ThirdSensor":
-                sensors.AddRange(mongo.GetCollection<ThirdSensorDTO>("ThirdSensor").Find(x => x.SensorId == id).ToList().Select(x => new SensorDTO { SensorType = "ThirdSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-                break;
-            case "FourthSensor":
-                sensors.AddRange(mongo.GetCollection<FourthSensorDTO>("FourthSensor").Find(x => x.SensorId == id).ToList().Select(x => new SensorDTO { SensorType = "FourthSensor", SensorId = x.SensorId, Data = x.Data.ToString() }));
-                break;
-            default:
-                Console.WriteLine("Unknown sensor type.");
-                break;
+            sensors.AddRange(mongo.GetCollection<Sensor>(category).Find(x => x.SensorId == id).ToList().Select(x => new SensorDTO { SensorType = x.SensorType, SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime.ToString("yyyy-MM-dd HH:mm:ss") }));
+        }
+        catch (FormatException ex)
+        {
+            Console.WriteLine(ex.Message);
         }
         return sensors;
     }
