@@ -60,6 +60,51 @@ public class SensorController
         return SensorService.GetOneSensorSortByDate(category, id, isAscending);
     }
     
+    public GetAllSensorsResponse GetAllSensorsDataFromDateToDate(string startDate, string endDate)
+    {
+        try
+        {
+            var dateFrom = DateTime.Parse(startDate);
+            var dateTo = DateTime.Parse(endDate);   
+            return SensorService.GetAllSensorsDataFromDateToDate(dateFrom, dateTo);
+        }
+        catch (FormatException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return new GetAllSensorsResponse();
+        }
+    }
+    
+    public GetOneCategoryResponse GetOneCategoryFromDateToDate(string category, string startDate, string endDate)
+    {
+        try
+        {
+            var dateFrom = DateTime.Parse(startDate);
+            var dateTo = DateTime.Parse(endDate);   
+            return SensorService.GetOneCategoryFromDateToDate(category, dateFrom, dateTo);
+        }
+        catch (FormatException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return new GetOneCategoryResponse();
+        }
+    }
+    
+    public GetOneCategoryResponse GetOneSensorFromDateToDate(string category, int id, string startDate, string endDate)
+    {
+        try
+        {
+            var dateFrom = DateTime.Parse(startDate);
+            var dateTo = DateTime.Parse(endDate);   
+            return SensorService.GetOneSensorFromDateToDate(category, id, dateFrom, dateTo);
+        }
+        catch (FormatException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return new GetOneCategoryResponse();
+        }
+    }
+    
     public void DropDB()
     {
         MongoRepo.GetInstance().EraseDB();

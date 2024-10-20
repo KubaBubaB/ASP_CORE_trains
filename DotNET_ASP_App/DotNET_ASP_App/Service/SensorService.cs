@@ -1,8 +1,7 @@
 ﻿using DotNET_ASP_App.DTOs;
 using DotNET_ASP_App.DTOs.Responses;
 using DotNET_ASP_App.Repository;
-
-// using System.Text.Json; string jsonString = JsonSerializer.Serialize(object);
+using DotNET_ASP_App.Sensors;
 
 namespace DotNET_ASP_App.Service;
 
@@ -13,10 +12,7 @@ public class SensorService
         var sensors = MongoRepo.GetInstance().GetAllSensorsDTO();
         return new GetAllSensorsResponse
         {
-            FirstSensors = sensors.FindAll(s => s.SensorType == "FirstSensor"),
-            SecondSensors = sensors.FindAll(s => s.SensorType == "SecondSensor"),
-            ThirdSensors = sensors.FindAll(s => s.SensorType == "ThirdSensor"),
-            FourthSensors = sensors.FindAll(s => s.SensorType == "FourthSensor")
+            Sensors = sensors
         };
     }
 
@@ -43,10 +39,7 @@ public class SensorService
         var sensors = MongoRepo.GetInstance().GetAllSensorsDTO();
         return new GetAllSensorsResponse
         {
-            FirstSensors = isAscending ? sensors.FindAll(s => s.SensorType == "FirstSensor").OrderBy(s => s.Data).ToList() : sensors.FindAll(s => s.SensorType == "FirstSensor").OrderByDescending(s => s.Data).ToList(),
-            SecondSensors = isAscending ? sensors.FindAll(s => s.SensorType == "SecondSensor").OrderBy(s => s.Data).ToList() : sensors.FindAll(s => s.SensorType == "SecondSensor").OrderByDescending(s => s.Data).ToList(),
-            ThirdSensors = isAscending ? sensors.FindAll(s => s.SensorType == "ThirdSensor").OrderBy(s => s.Data).ToList() : sensors.FindAll(s => s.SensorType == "ThirdSensor").OrderByDescending(s => s.Data).ToList(),
-            FourthSensors = isAscending ? sensors.FindAll(s => s.SensorType == "FourthSensor").OrderBy(s => s.Data).ToList() : sensors.FindAll(s => s.SensorType == "FourthSensor").OrderByDescending(s => s.Data).ToList()
+            Sensors = isAscending ? sensors.OrderBy(s => s.Data).ToList() : sensors.OrderByDescending(s => s.Data).ToList(),
         };
     }
 
@@ -71,121 +64,111 @@ public class SensorService
     public GetAllSensorsResponse GetAllSensorsDataSortByDate(bool isAscending)
     {
         var sensors = MongoRepo.GetInstance().GetAllSensors();
-        var firstSensors = isAscending ? sensors.FirstSensors.OrderBy(s => s.DateTime).ToList() : sensors.FirstSensors.OrderByDescending(s => s.DateTime).ToList();
-        var secondSensors = isAscending ? sensors.SecondSensors.OrderBy(s => s.DateTime).ToList() : sensors.SecondSensors.OrderByDescending(s => s.DateTime).ToList();
-        var thirdSensors = isAscending ? sensors.ThirdSensors.OrderBy(s => s.DateTime).ToList() : sensors.ThirdSensors.OrderByDescending(s => s.DateTime).ToList();
-        var fourthSensors = isAscending ? sensors.FourthSensors.OrderBy(s => s.DateTime).ToList() : sensors.FourthSensors.OrderByDescending(s => s.DateTime).ToList();
+        var sensorsToRet = new List<Sensor>();
+        sensorsToRet.AddRange(sensors.PressureSensors);
+        sensorsToRet.AddRange(sensors.TemperatureSensors);
+        sensorsToRet.AddRange(sensors.HumiditySensors);
+        sensorsToRet.AddRange(sensors.VibrationSensors);
+        sensorsToRet = isAscending ? sensorsToRet.OrderBy(s => s.DateTime).ToList() : sensorsToRet.OrderByDescending(s => s.DateTime).ToList();
         return new GetAllSensorsResponse
         {
-            FirstSensors = firstSensors.ConvertAll((listElement) => {return new SensorDTO{Data = listElement.Data, DateTime = listElement.DateTime.ToString(), SensorId = listElement.SensorId, SensorType = "FirstSensor"};}),
-            SecondSensors = secondSensors.ConvertAll((listElement) => {return new SensorDTO{Data = listElement.Data.ToString(), DateTime = listElement.DateTime.ToString(), SensorId = listElement.SensorId, SensorType = "SecondSensor"};}),
-            ThirdSensors = thirdSensors.ConvertAll((listElement) => {return new SensorDTO{Data = listElement.Data.ToString(), DateTime = listElement.DateTime.ToString(), SensorId = listElement.SensorId, SensorType = "SecondSensor"};}),
-            FourthSensors = fourthSensors.ConvertAll((listElement) => {return new SensorDTO{Data = listElement.Data.ToString(), DateTime = listElement.DateTime.ToString(), SensorId = listElement.SensorId, SensorType = "SecondSensor"};})
+            Sensors = sensorsToRet.ConvertAll(listElement => new SensorDTO
+            {
+                Data = listElement.Data, DateTime = listElement.DateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                SensorId = listElement.SensorId, SensorType = listElement.SensorType
+            })
         };
     }
 
     public GetOneCategoryResponse GetOneCategorySortByDate(string category, bool isAscending)
     {
-        switch (category)
+        try
         {
-            case "FirstSensor":
-                var firstSensors = MongoRepo.GetInstance().GetOneCategory<FirstSensorDTO>("FirstSensor");
-                if (isAscending)
-                {
-                    firstSensors = firstSensors.OrderBy(s => s.DateTime).ToList();
-                }
-                else
-                {
-                    firstSensors = firstSensors.OrderByDescending(s => s.DateTime).ToList();
-                }
+            var sensors = MongoRepo.GetInstance().GetOneCategory(category);
+            if(isAscending)
+            {
+                sensors = sensors.OrderBy(s => s.DateTime).ToList();
+            }
+            else
+            {
+                sensors = sensors.OrderByDescending(s => s.DateTime).ToList();
+            }
 
-                return new GetOneCategoryResponse
+            return new GetOneCategoryResponse
+            {
+                Sensors = sensors.ConvertAll(listElement => new SensorDTO
                 {
-                    Sensors = firstSensors.ConvertAll((listElement) =>
-                    {
-                        return new SensorDTO
-                        {
-                            Data = listElement.Data, DateTime = listElement.DateTime.ToString(),
-                            SensorId = listElement.SensorId, SensorType = "FirstSensor"
-                        };
-                    })
-                };
-            case "SecondSensor":
-                var secondSensors = MongoRepo.GetInstance().GetOneCategory<SecondSensorDTO>("SecondSensor");
-                if (isAscending)
-                {
-                    secondSensors = secondSensors.OrderBy(s => s.DateTime).ToList();
-                }
-                else
-                {
-                    secondSensors = secondSensors.OrderByDescending(s => s.DateTime).ToList();
-                }
-
-                return new GetOneCategoryResponse
-                {
-                    Sensors = secondSensors.ConvertAll((listElement) =>
-                    {
-                        return new SensorDTO
-                        {
-                            Data = listElement.Data.ToString(), DateTime = listElement.DateTime.ToString(),
-                            SensorId = listElement.SensorId, SensorType = "SecondSensor"
-                        };
-                    })
-                };
-            case "ThirdSensor":
-                var thirdSensor = MongoRepo.GetInstance().GetOneCategory<ThirdSensorDTO>("ThirdSensor");
-                if (isAscending)
-                {
-                    thirdSensor = thirdSensor.OrderBy(s => s.DateTime).ToList();
-                }
-                else
-                {
-                    thirdSensor = thirdSensor.OrderByDescending(s => s.DateTime).ToList();
-                }
-
-                return new GetOneCategoryResponse
-                {
-                    Sensors = thirdSensor.ConvertAll((listElement) =>
-                    {
-                        return new SensorDTO
-                        {
-                            Data = listElement.Data.ToString(), DateTime = listElement.DateTime.ToString(),
-                            SensorId = listElement.SensorId, SensorType = "ThirdSensor"
-                        };
-                    })
-                };
-                break;
-            case "FourthSensor":
-                var fourthSensor = MongoRepo.GetInstance().GetOneCategory<FourthSensorDTO>("FourthSensor");
-                if (isAscending)
-                {
-                    fourthSensor = fourthSensor.OrderBy(s => s.DateTime).ToList();
-                }
-                else
-                {
-                    fourthSensor = fourthSensor.OrderByDescending(s => s.DateTime).ToList();
-                }
-
-                return new GetOneCategoryResponse
-                {
-                    Sensors = fourthSensor.ConvertAll((listElement) =>
-                    {
-                        return new SensorDTO
-                        {
-                            Data = listElement.Data.ToString(), DateTime = listElement.DateTime.ToString(),
-                            SensorId = listElement.SensorId, SensorType = "FourthSensor"
-                        };
-                    })
-                };
-            default:
-                Console.WriteLine("Unknown sensor type.");
-                return null;
+                    Data = listElement.Data, DateTime = listElement.DateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    SensorId = listElement.SensorId, SensorType = category
+                })
+            };
+        }
+        catch (FormatException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return new GetOneCategoryResponse
+            {
+                Sensors = new List<SensorDTO>()
+            };
         }
     }
 
     public GetOneCategoryResponse GetOneSensorSortByDate(string category, int id, bool isAscending)
     {
         var categoryOfSensor = GetOneCategorySortByDate(category, isAscending);
+        return new GetOneCategoryResponse
+        {
+            Sensors = categoryOfSensor.Sensors.FindAll(s => s.SensorId == id)
+        };
+    }
+    
+    public GetAllSensorsResponse GetAllSensorsDataFromDateToDate(DateTime fromDate, DateTime toDate)
+    {
+        var sensors = MongoRepo.GetInstance().GetAllSensors();
+        var sensorsToRet = new List<Sensor>();
+        sensorsToRet.AddRange(sensors.PressureSensors);
+        sensorsToRet.AddRange(sensors.TemperatureSensors);
+        sensorsToRet.AddRange(sensors.HumiditySensors);
+        sensorsToRet.AddRange(sensors.VibrationSensors);
+        sensorsToRet = sensorsToRet.FindAll(s => s.DateTime >= fromDate && s.DateTime <= toDate);
+        return new GetAllSensorsResponse
+        {
+            Sensors = sensorsToRet.ConvertAll(listElement => new SensorDTO
+            {
+                Data = listElement.Data, DateTime = listElement.DateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                SensorId = listElement.SensorId, SensorType = listElement.SensorType
+            })
+        };
+    }
+    
+    public GetOneCategoryResponse GetOneCategoryFromDateToDate(string category, DateTime fromDate, DateTime toDate)
+    {
+        try
+        {
+            var sensors = MongoRepo.GetInstance().GetOneCategory(category);
+            sensors = sensors.FindAll(s => s.DateTime >= fromDate && s.DateTime <= toDate);
+            return new GetOneCategoryResponse
+            {
+                Sensors = sensors.ConvertAll(listElement => new SensorDTO
+                {
+                    Data = listElement.Data, DateTime = listElement.DateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                    SensorId = listElement.SensorId, SensorType = category
+                })
+            };
+        }
+        catch (FormatException ex)
+        {
+            Console.WriteLine(ex.Message);
+            return new GetOneCategoryResponse
+            {
+                Sensors = new List<SensorDTO>()
+            };
+        }
+    }
+    
+    public GetOneCategoryResponse GetOneSensorFromDateToDate(string category, int id, DateTime fromDate, DateTime toDate)
+    {
+        var categoryOfSensor = GetOneCategoryFromDateToDate(category, fromDate, toDate);
         return new GetOneCategoryResponse
         {
             Sensors = categoryOfSensor.Sensors.FindAll(s => s.SensorId == id)

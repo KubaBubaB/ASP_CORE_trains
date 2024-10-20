@@ -27,6 +27,9 @@ app.MapGet("/sensors/sorted/{category}/{id}/{isAscending}", (string category, in
 app.MapGet("/sensors/sorted/date/{isAscending}", (bool isAscending) => sensorController.GetAllSensorsDataSortByDate(isAscending));
 app.MapGet("/sensors/sorted/date/{category}/{isAscending}", (string category, bool isAscending) => sensorController.GetOneCategorySortByDate(category, isAscending));
 app.MapGet("/sensors/sorted/date/{category}/{id}/{isAscending}", (string category, int id, bool isAscending) => sensorController.GetOneSensorSortByDate(category, id, isAscending));
+app.MapGet("/sensors/dateRange/{from}/{to}", (string from, string to) => sensorController.GetAllSensorsDataFromDateToDate(from, to)); // YYYY-MM-DDTHH:MM:SS
+app.MapGet("/sensors/dateRange/{category}/{from}/{to}", (string category, string from, string to) => sensorController.GetOneCategoryFromDateToDate(category, from, to)); // YYYY-MM-DDTHH:MM:SS)
+app.MapGet("/sensors/dateRange/{category}/{id}/{from}/{to}", (string category, int id, string from, string to) => sensorController.GetOneSensorFromDateToDate(category, id, from, to)); // YYYY-MM-DDTHH:MM:SS
 // END MAP GET SENSORS
 
 // START MAP PUT

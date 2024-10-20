@@ -23,12 +23,12 @@ public class MQTTHandler
                 Console.WriteLine("Received application message.");
                 try
                 {
-                    var payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload).Replace('\'', '\"');;
+                    var payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload).Replace('\'', '\"');
                     var sensorData = JsonSerializer.Deserialize<SensorDTO>(payload);
 
                     if (sensorData != null)
                     {
-                        MongoRepo.GetInstance().SaveSensorData(sensorData, true);
+                        MongoRepo.GetInstance().SaveSensorData(sensorData);
                     }
                     else
                     {

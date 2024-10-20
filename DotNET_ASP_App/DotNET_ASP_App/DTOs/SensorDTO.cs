@@ -6,7 +6,7 @@ public class SensorDTO
       
     public int SensorId { get; set; }
 
-    public string Data { get; set; }
-    // FORMAT: "DD/MM/YYYY HH:MM:SS"
+    public double Data { get; set; }
+    // FORMAT: "yyyy-MM-dd HH:mm:ss"
     public string DateTime { get; set; }
 }

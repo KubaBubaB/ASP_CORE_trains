@@ -2,8 +2,5 @@
 
 public record GetAllSensorsResponse
 {
-    public List<SensorDTO> FirstSensors { get; set; }
-    public List<SensorDTO> SecondSensors { get; set; }
-    public List<SensorDTO> ThirdSensors { get; set; }
-    public List<SensorDTO> FourthSensors { get; set; }
+    public List<SensorDTO> Sensors { get; set; }
 }

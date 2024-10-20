@@ -11,21 +11,6 @@ public class MongoDBHandler
     private MongoDBHandler()
     {
         client = new MongoClient("mongodb://admin:admin@localhost:27017");
-        var collection = client.GetDatabase("DOTNET").GetCollection<FirstSensorDTO>("InitCollection");
-        var filter = Builders<FirstSensorDTO>.Filter.Eq("Data", "value");
-        if (collection.Find(filter) != null)
-        {
-            Console.WriteLine("Database already initialized");
-        }
-        else
-        {
-            collection.InsertOne(new FirstSensorDTO { SensorId = 1, Data = "value", Id = Guid.NewGuid()});
-            var document = collection.Find(filter).First();
-            if (document.Data == "value")
-            {
-                Console.WriteLine("Database init successful");
-            }
-        }
     }
     public static MongoClient GetClient()
     {
