@@ -15,7 +15,7 @@ public class MQTTHandler
         using (var mqttClient = mqttFactory.CreateMqttClient())
         {
             int portOfBroker = 1883;
-            var mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("localhost", portOfBroker).Build();
+            var mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("mqtt5", portOfBroker).Build();
             
             // Handler for received application messages
             mqttClient.ApplicationMessageReceivedAsync += e =>

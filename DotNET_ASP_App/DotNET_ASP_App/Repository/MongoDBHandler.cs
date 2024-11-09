@@ -10,7 +10,7 @@ public class MongoDBHandler
     private MongoClient client;
     private MongoDBHandler()
     {
-        client = new MongoClient("mongodb://admin:admin@localhost:27017");
+        client = new MongoClient("mongodb://admin:admin@mongo:27017");
     }
     public static MongoClient GetClient()
     {

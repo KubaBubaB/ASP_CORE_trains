@@ -24,6 +24,6 @@ class Sensor:
         return {
             "SensorType": str(self.sensor_type),
             "SensorId": self.id,
-            "Data": str(numeric_data),
-            "Date": str(datetime.now().isoformat())
+            "Data": numeric_data,
+            "DateTime": datetime.now().isoformat()
         }
