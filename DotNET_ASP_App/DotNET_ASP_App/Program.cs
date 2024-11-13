@@ -2,9 +2,12 @@ using DotNET_ASP_App.Controller;
 using DotNET_ASP_App.Queue;
 using DotNET_ASP_App.Repository;
 using DotNET_ASP_App.Service;
-using MQTTnet;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSingleton<SensorService>();
+builder.Services.AddControllers();
+
 var app = builder.Build();
 var sensorService = new SensorService();
 var sensorController = new SensorController(sensorService);
@@ -37,4 +40,5 @@ app.MapPut("/dropdb", () => sensorController.DropDB());
 // END MAP PUT
 
 //END ROUTING
+app.MapControllers();
 app.Run();

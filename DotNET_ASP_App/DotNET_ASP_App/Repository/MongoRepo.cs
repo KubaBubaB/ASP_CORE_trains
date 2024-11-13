@@ -64,10 +64,10 @@ public class MongoRepo
     public SensorAgregation GetAllSensors()
     {
         SensorAgregation sensors = new();
-        sensors.TemperatureSensors = mongo.GetCollection<Sensor>("Temperature").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
-        sensors.VibrationSensors = mongo.GetCollection<Sensor>("Vibration").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
-        sensors.HumiditySensors = mongo.GetCollection<Sensor>("Humidity").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
-        sensors.PressureSensors = mongo.GetCollection<Sensor>("Pressure").Find(_ => true).ToList().Select(x => new Sensor { SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
+        sensors.TemperatureSensors = mongo.GetCollection<Sensor>("Temperature").Find(_ => true).ToList().Select(x => new Sensor { SensorType = x.SensorType, SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
+        sensors.VibrationSensors = mongo.GetCollection<Sensor>("Vibration").Find(_ => true).ToList().Select(x => new Sensor { SensorType = x.SensorType, SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
+        sensors.HumiditySensors = mongo.GetCollection<Sensor>("Humidity").Find(_ => true).ToList().Select(x => new Sensor { SensorType = x.SensorType, SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
+        sensors.PressureSensors = mongo.GetCollection<Sensor>("Pressure").Find(_ => true).ToList().Select(x => new Sensor { SensorType = x.SensorType, SensorId = x.SensorId, Data = x.Data, DateTime = x.DateTime }).ToList();
         return sensors;
     }
     

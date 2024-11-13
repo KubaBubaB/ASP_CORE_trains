@@ -1,4 +1,6 @@
-﻿using DotNET_ASP_App.DTOs;
+﻿using System.Text;
+using System.Text.Json;
+using DotNET_ASP_App.DTOs;
 using DotNET_ASP_App.DTOs.Responses;
 using DotNET_ASP_App.Repository;
 using DotNET_ASP_App.Sensors;
@@ -173,5 +175,126 @@ public class SensorService
         {
             Sensors = categoryOfSensor.Sensors.FindAll(s => s.SensorId == id)
         };
+    }
+    
+    public GetAllSensorsResponse GetSensorsData(string? sensorType,
+        string? sensorId,
+        string? startDate,
+        string? endDate,
+        string? sortBy,
+        string? sortOrder)
+    {
+        var sensorsToRet = new List<Sensor>();
+            
+        if (string.IsNullOrEmpty(sensorType)) {
+            var sensors = MongoRepo.GetInstance().GetAllSensors();
+            sensorsToRet.AddRange(sensors.PressureSensors);
+            sensorsToRet.AddRange(sensors.TemperatureSensors);
+            sensorsToRet.AddRange(sensors.HumiditySensors);
+            sensorsToRet.AddRange(sensors.VibrationSensors);
+        }
+        else {
+            sensorsToRet = MongoRepo.GetInstance().GetOneCategory(sensorType);
+        }
+
+        if (!string.IsNullOrEmpty(sensorId))
+        {
+            sensorsToRet = sensorsToRet.FindAll(s => s.SensorId == Int32.Parse(sensorId));
+        }
+        
+        if (!string.IsNullOrEmpty(startDate))
+        {
+            sensorsToRet = sensorsToRet.FindAll(s => s.DateTime >= DateTime.Parse(startDate));
+        }
+        
+        if (!string.IsNullOrEmpty(endDate))
+        {
+            sensorsToRet = sensorsToRet.FindAll(s => s.DateTime <= DateTime.Parse(endDate));
+        }
+        
+        if (!string.IsNullOrEmpty(sortBy))
+        {
+            if(!string.IsNullOrEmpty(sortOrder) && sortOrder.Equals("desc", StringComparison.OrdinalIgnoreCase))
+            {
+                if (sortBy.Equals("DateTime", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderByDescending(s => s.DateTime).ToList();
+                }
+                else if (sortBy.Equals("Data", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderByDescending(s => s.Data).ToList();
+                }
+                else if (sortBy.Equals("SensorId", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderByDescending(s => s.SensorId).ToList();
+                }
+                else if (sortBy.Equals("SensorType", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderByDescending(s => s.SensorType).ToList();
+                }
+            }
+            else
+            {
+                if (sortBy.Equals("DateTime", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderBy(s => s.DateTime).ToList();
+                }
+                else if (sortBy.Equals("Data", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderBy(s => s.Data).ToList();
+                }
+                else if (sortBy.Equals("SensorId", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderBy(s => s.SensorId).ToList();
+                }
+                else if (sortBy.Equals("SensorType", StringComparison.OrdinalIgnoreCase))
+                {
+                    sensorsToRet = sensorsToRet.OrderBy(s => s.SensorType).ToList();
+                }
+            }
+        }
+        
+        return new GetAllSensorsResponse
+        {
+            Sensors = sensorsToRet.ConvertAll(listElement => new SensorDTO
+            {
+                Data = listElement.Data, DateTime = listElement.DateTime.ToString("yyyy-MM-dd HH:mm:ss"),
+                SensorId = listElement.SensorId, SensorType = listElement.SensorType
+            })
+        };
+    }
+
+    public Stream createCsv(GetAllSensorsResponse sensors)
+    {
+        var memoryStream = new MemoryStream();
+        
+        using (var writer = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true))
+        {   
+            writer.WriteLine("SensorId;SensorType;Data;DateTime");
+            foreach (var sensor in sensors.Sensors)
+            {
+                var line = $"{sensor.SensorId};{sensor.SensorType};{sensor.Data};{sensor.DateTime}";
+                writer.WriteLine(line);
+            }
+        }
+        memoryStream.Position = 0;
+        return memoryStream;
+    }
+    
+    public Stream createJson(GetAllSensorsResponse sensors)
+    {
+        var memoryStream = new MemoryStream();
+        using (var writer = new StreamWriter(memoryStream, Encoding.UTF8, leaveOpen: true))
+        {
+            string jsonString = JsonSerializer.Serialize(sensors, new JsonSerializerOptions
+            {
+                WriteIndented = true 
+            });
+            
+            writer.Write(jsonString);
+        }
+        
+        memoryStream.Position = 0;
+        return memoryStream;
     }
 }

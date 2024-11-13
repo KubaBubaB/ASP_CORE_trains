@@ -1,5 +1,16 @@
 ﻿version: "3.8"
 services:
+  backend-trains:
+    image: backend-trains
+    build:
+      context: ./DotNET_ASP_App
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - mongo
+      - mqtt5
+  
   mongo:
     image: mongo
     environment:
