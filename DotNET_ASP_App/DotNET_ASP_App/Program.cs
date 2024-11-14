@@ -6,6 +6,7 @@ using DotNET_ASP_App.Service;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<SensorService>();
+builder.Services.AddSingleton<BlockchainService>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
