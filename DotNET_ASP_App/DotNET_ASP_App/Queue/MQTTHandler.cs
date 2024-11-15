@@ -2,12 +2,20 @@
 using System.Text.Json;
 using DotNET_ASP_App.DTOs;
 using DotNET_ASP_App.Repository;
+using DotNET_ASP_App.WebSocket;
 using MQTTnet;
 
 namespace DotNET_ASP_App.Queue;
 
 public class MQTTHandler
 {
+    private static NotificationService _notificationService;
+    
+    public MQTTHandler(NotificationService notificationService)
+    {
+        _notificationService = notificationService;
+    }
+    
     public static async Task Handle_Received_Application_Message()
     {
         var mqttFactory = new MqttClientFactory();
@@ -29,6 +37,7 @@ public class MQTTHandler
                     if (sensorData != null)
                     {
                         MongoRepo.GetInstance().SaveSensorData(sensorData);
+                        _notificationService.NotifyClientsAsync(payload);
                     }
                     else
                     {
