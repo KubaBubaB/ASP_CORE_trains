@@ -10,6 +10,19 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<SensorService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddSingleton<NotificationService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
@@ -59,7 +72,7 @@ app.Use(async (context, next) =>
  */
 
 
-
+app.UseCors("AllowAllOrigins");
 app.UseRouting();
 
 // Initialize connection to Mongo
