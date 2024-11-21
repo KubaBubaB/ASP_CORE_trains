@@ -27,7 +27,7 @@ services:
     container_name: mqtt5
     ports:
       - "1883:1883"  # for TCP
-      - "9001:9001"  # for WebSockets (optional)
+ #     - "9001:9001"  # for WebSockets (optional)
     volumes:
       - ./mosquitto/config:/mosquitto/config:rw  # Mount the custom config directory
       - data:/mosquitto/data:rw
