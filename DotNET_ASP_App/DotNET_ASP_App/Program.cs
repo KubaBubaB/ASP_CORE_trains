@@ -10,6 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSingleton<SensorService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddSingleton<NotificationService>();
+builder.Services.AddSingleton<WebSocketHandler>();
+builder.Services.AddSingleton<NotificationService>();
 
 builder.Services.AddCors(options =>
 {
@@ -79,7 +81,8 @@ app.UseRouting();
 MongoDBHandler.GetClient();
 
 // Start the MQTT handler
-_ = Task.Run(async () => await MQTTHandler.Handle_Received_Application_Message());
+var mqttHandler = new MQTTHandler(notificationService);
+_ = Task.Run(async () => await mqttHandler.Handle_Received_Application_Message());
 
 //ROUTING
 

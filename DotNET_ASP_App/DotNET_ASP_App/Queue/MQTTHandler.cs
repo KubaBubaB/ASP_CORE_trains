@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Buffers;
+using System.Text;
 using System.Text.Json;
 using DotNET_ASP_App.DTOs;
 using DotNET_ASP_App.Repository;
@@ -9,14 +10,14 @@ namespace DotNET_ASP_App.Queue;
 
 public class MQTTHandler
 {
-    private static NotificationService _notificationService;
+    private readonly NotificationService _notificationService;
     
     public MQTTHandler(NotificationService notificationService)
     {
-        _notificationService = notificationService;
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
     }
     
-    public static async Task Handle_Received_Application_Message()
+    public async Task Handle_Received_Application_Message()
     {
         var mqttFactory = new MqttClientFactory();
 
@@ -26,31 +27,85 @@ public class MQTTHandler
             var mqttClientOptions = new MqttClientOptionsBuilder().WithTcpServer("mqtt5", portOfBroker).Build();
             
             // Handler for received application messages
-            mqttClient.ApplicationMessageReceivedAsync += e =>
+            mqttClient.ApplicationMessageReceivedAsync += async e =>
             {
                 Console.WriteLine("Received application message.");
+
+                var payloadSequence = e.ApplicationMessage.Payload;
+
+                if (payloadSequence.IsEmpty)
+                {
+                    Console.WriteLine("Payload is empty.");
+                    return;
+                }
+
+                var payloadBytes = payloadSequence.ToArray();
+                var payloadString = Encoding.UTF8.GetString(payloadBytes);
+                Console.WriteLine($"Raw payload: '{payloadString}'");
+
+                var formattedPayload = payloadString.Replace('\'', '\"');
+                Console.WriteLine($"Formatted payload: '{formattedPayload}'");
+
+                SensorDTO sensorData = null;
+
                 try
                 {
-                    var payload = Encoding.UTF8.GetString(e.ApplicationMessage.Payload).Replace('\'', '\"');
-                    var sensorData = JsonSerializer.Deserialize<SensorDTO>(payload);
-
+                    sensorData = JsonSerializer.Deserialize<SensorDTO>(formattedPayload);
                     if (sensorData != null)
                     {
-                        MongoRepo.GetInstance().SaveSensorData(sensorData);
-                        _notificationService.NotifyClientsAsync(payload);
+                        Console.WriteLine("Deserialization successful.");
                     }
                     else
                     {
-                        Console.WriteLine("Failed to deserialize payload.");
+                        Console.WriteLine("Failed to deserialize payload to SensorDTO.");
+                        return;
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error deserializing payload: {ex.Message}");
+                    return;
                 }
 
-                return Task.CompletedTask;
+                try
+                {
+                    Console.WriteLine("Attempting to save sensor data to MongoDB.");
+                    var mongoRepo = MongoRepo.GetInstance();
+                    if (mongoRepo == null)
+                    {
+                        Console.WriteLine("MongoRepo instance is null.");
+                    }
+                    else
+                    {
+                        mongoRepo.SaveSensorData(sensorData);
+                        Console.WriteLine("Sensor data saved to MongoDB.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error saving sensor data to MongoDB: {ex}");
+                }
+
+                try
+                {
+                    Console.WriteLine("Attempting to notify clients via WebSocket.");
+                    if (_notificationService == null)
+                    {
+                        Console.WriteLine("_notificationService is null.");
+                    }
+                    else
+                    {
+                        await _notificationService.NotifyClientsAsync(formattedPayload);
+                        Console.WriteLine("Clients notified.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error notifying clients: {ex}");
+                }
+
             };
+
 
             Console.WriteLine("Connecting to MQTT broker...");
             await mqttClient.ConnectAsync(mqttClientOptions, CancellationToken.None);
