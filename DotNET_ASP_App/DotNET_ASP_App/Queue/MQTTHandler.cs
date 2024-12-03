@@ -95,7 +95,7 @@ public class MQTTHandler
                     }
                     else
                     {
-                        await _notificationService.NotifyClientsAsync(formattedPayload);
+                        await _notificationService.NotifyClientsAsync(sensorData);
                         Console.WriteLine("Clients notified.");
                     }
                 }
