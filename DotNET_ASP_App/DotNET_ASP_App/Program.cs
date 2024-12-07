@@ -1,23 +1,89 @@
+using System.Net.WebSockets;
 using DotNET_ASP_App.Controller;
 using DotNET_ASP_App.Queue;
 using DotNET_ASP_App.Repository;
 using DotNET_ASP_App.Service;
+using DotNET_ASP_App.WebSocket;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<SensorService>();
 builder.Services.AddSingleton<BlockchainService>();
+builder.Services.AddSingleton<WebSocketHandler>();
+builder.Services.AddSingleton<NotificationService>();
+builder.Services.AddSingleton<WebSocketHandler>();
+builder.Services.AddSingleton<NotificationService>();
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyHeader()
+                .AllowAnyMethod();
+        });
+});
+
+
 builder.Services.AddControllers();
 
 var app = builder.Build();
-var sensorService = new SensorService();
+var sensorService = app.Services.GetRequiredService<SensorService>();
 var sensorController = new SensorController(sensorService);
+var webSocketHandler = app.Services.GetRequiredService<WebSocketHandler>();
+var notificationService = app.Services.GetRequiredService<NotificationService>();
+
+// Init WebSocket
+
+app.UseWebSockets();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/ws")
+    {
+        if (context.WebSockets.IsWebSocketRequest)
+        {
+            var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+            webSocketHandler.AddSocket(webSocket);
+
+            // Keep the connection open
+            while (webSocket.State == WebSocketState.Open)
+            {
+                await Task.Delay(1000); // Prevent high CPU usage
+            }
+        }
+        else
+        {
+            context.Response.StatusCode = 400;
+        }
+    }
+    else
+    {
+        await next();
+    }
+});
+/*
+ * Example of how to connect to the WebSocket from javascript :))
+ * 
+ *const socket = new WebSocket('ws://localhost:5000/ws');
+ *
+ *
+ *socket.addEventListener('message', (event) => {
+ *    console.log('Message from server:', event.data);
+ *}); 
+ */
+
+
+app.UseCors("AllowAllOrigins");
+app.UseRouting();
 
 // Initialize connection to Mongo
 MongoDBHandler.GetClient();
 
 // Start the MQTT handler
-_ = Task.Run(async () => await MQTTHandler.Handle_Received_Application_Message());
+var mqttHandler = new MQTTHandler(notificationService);
+_ = Task.Run(async () => await mqttHandler.Handle_Received_Application_Message());
 
 //ROUTING
 
