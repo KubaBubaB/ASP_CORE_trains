@@ -8,6 +8,7 @@ using DotNET_ASP_App.WebSocket;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<SensorService>();
+builder.Services.AddSingleton<BlockchainService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddSingleton<NotificationService>();
 builder.Services.AddSingleton<WebSocketHandler>();

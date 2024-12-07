@@ -19,6 +19,7 @@
       <PackageReference Include="MQTTnet.AspNetCore" Version="5.0.0.1214-RC" />
       <PackageReference Include="MQTTnet.Extensions.ManagedClient" Version="4.3.7.1207" />
       <PackageReference Include="MQTTnet.Extensions.TopicTemplate" Version="5.0.0.1214-RC" />
+      <PackageReference Include="Nethereum" Version="4.20.0--date20240411-0529.git-a691a3d" />
     </ItemGroup>
 
 </Project>
