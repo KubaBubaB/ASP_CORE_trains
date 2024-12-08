@@ -41,6 +41,25 @@ services:
       "
     restart: unless-stopped
 
+  frontend-trains:
+      build:
+        context: ./frontend-trains
+        dockerfile: Dockerfile
+      ports:
+        - "8147:8147"
+      volumes:
+        - ./frontend-trains:/app
+        - /app/node_modules
+      stdin_open: true
+      tty: true
+      environment:
+        - PORT=8147
+        - BROWSER=none
+        - CI=true
+      depends_on:
+        - backend-trains
+      command: npm start
+
 volumes:
   mongodata:
     driver: local

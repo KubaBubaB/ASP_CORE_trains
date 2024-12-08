@@ -1,0 +1,21 @@
+# This is a generated file. Not intended for manual editing.
+version: "3.8"
+services:
+  backend-trains:
+    build:
+      context: "D:\\Kwicinek\\dotnet\\ASP_CORE_trains\\DotNET_ASP_App\\DotNET_ASP_App"
+      dockerfile: "Dockerfile"
+      target: "build-env"
+    command: []
+    entrypoint:
+    - "dotnet"
+    - "/app/bin/Debug/net8.0/DotNET_ASP_App.dll"
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
+    image: "backend-trains:dev"
+    ports: []
+    volumes:
+    - "D:\\Kwicinek\\dotnet\\ASP_CORE_trains\\DotNET_ASP_App\\DotNET_ASP_App:/app:rw"
+    - "D:\\Kwicinek\\dotnet\\ASP_CORE_trains\\DotNET_ASP_App:/src:rw"
+    - "C:\\Users\\stasi\\.nuget\\packages:/root/.nuget/packages"
+    working_dir: "/app"
