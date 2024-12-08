@@ -6,18 +6,17 @@ using DotNET_ASP_App.Repository;
 using DotNET_ASP_App.Service;
 using DotNET_ASP_App.WebSocket;
 using MQTTnet;
+using MQTTnet.Protocol;
 
 namespace DotNET_ASP_App.Queue;
 
-public class MQTTHandler
+public class MQTTSensorsHandler
 {
     private readonly NotificationService _notificationService;
-    private readonly BlockchainService _blockchainService;
     
-    public MQTTHandler(NotificationService notificationService, BlockchainService blockchainService)
+    public MQTTSensorsHandler(NotificationService notificationService)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
-        _blockchainService = blockchainService ?? throw new ArgumentNullException(nameof(blockchainService));
     }
     
     public async Task Handle_Received_Application_Message()
@@ -107,24 +106,14 @@ public class MQTTHandler
                     Console.WriteLine($"Error notifying clients: {ex}");
                 }
                 
-                try
-                {
-                    Console.WriteLine("Attempting to reward sensor.");
-                    if (_blockchainService == null)
-                    {
-                        Console.WriteLine("_blockchainService is null.");
-                    }
-                    else
-                    {
-                        await _blockchainService.RewardSensor(sensorData.SensorId);
-                        Console.WriteLine($"Sensor {sensorData.SensorId} rewarded.");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error rewarding sensor: {ex}");
-                }
+                var newPayload = JsonSerializer.Serialize(sensorData.SensorId);
+                var message = new MqttApplicationMessageBuilder()
+                    .WithTopic("REWARDS")
+                    .WithPayload(newPayload)
+                    .WithQualityOfServiceLevel(MqttQualityOfServiceLevel.ExactlyOnce)
+                    .Build();
 
+                await mqttClient.PublishAsync(message);
             };
 
 

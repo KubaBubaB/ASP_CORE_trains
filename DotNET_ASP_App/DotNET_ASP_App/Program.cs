@@ -81,8 +81,11 @@ app.UseRouting();
 MongoDBHandler.GetClient();
 
 // Start the MQTT handler
-var mqttHandler = new MQTTHandler(notificationService, blockchainService);
-_ = Task.Run(async () => await mqttHandler.Handle_Received_Application_Message());
+var mqttSensorsHandler = new MQTTSensorsHandler(notificationService);
+_ = Task.Run(async () => await mqttSensorsHandler.Handle_Received_Application_Message());
+
+var mqttRewardsHandler = new MQTTRewardsHandler(blockchainService);
+_ = Task.Run(async () => await mqttRewardsHandler.Handle_Received_Application_Message());
 
 //ROUTING
 

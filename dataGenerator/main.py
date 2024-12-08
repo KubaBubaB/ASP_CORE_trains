@@ -49,6 +49,7 @@ if __name__ == '__main__':
     def on_submit():
         values = [entry.get() for entry in input_fields]
         generator.update_sensors_data(values)
+        print("Values changed")
 
     def on_stop():
         if generator.is_generating():
