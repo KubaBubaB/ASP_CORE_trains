@@ -17,6 +17,7 @@ public class BlockchainService
     "0x686F554B8C9f7fDdb52c716b3D45Bdd4ac4e162A", "0xFdb2056188041196349859F216AcF039E88f00EC", "0x3F11e2E89a543b1195dCfEA2CbCc550455d331E1",
     "0x192Ce67c99C29b4ab6377dF5ab7CA13d4840cd4E", "0xb284C643F3Fc1290983adFC4a58B00831569D834", "0x650844a08f68D99C66E478e9AEB3d0be3bC934a4"];
     private Web3 web3;
+    private int decimals = -1;
 
     public BlockchainService()
     {
@@ -51,7 +52,55 @@ public class BlockchainService
     {   
         var contract = web3.Eth.GetContract(abi, contractAddress);
         var balanceOfFunction = contract.GetFunction("balanceOf");
-        var balance = await balanceOfFunction.CallAsync<BigInteger>(addresses[sensorId]);
+        var balance = await balanceOfFunction.CallAsync<BigInteger>(addresses[sensorId + 1]);
         return Web3.Convert.FromWei(balance);
+    }
+
+    public async Task<int> GetDecimals()
+    {
+        if (decimals == -1)
+        {
+            var contract = web3.Eth.GetContract(abi, contractAddress);
+            var decimalsFunction = contract.GetFunction("decimals");
+            return await decimalsFunction.CallAsync<int>();
+        }
+        return decimals;
+    }
+    
+    public async Task RewardSensor(int sensorId)
+    {
+        try
+        {
+            if (sensorId < 0 || sensorId > 15) throw new ArgumentOutOfRangeException(nameof(sensorId), "Invalid sensor ID.");
+        
+            var senderAddress = addresses[0];
+            var rewardedSensorAddress = addresses[sensorId + 1];
+            var contract = web3.Eth.GetContract(abi, contractAddress);
+            
+            var decimals = await GetDecimals();
+        
+            var tokenAmount = Web3.Convert.ToWei(1, decimals);
+            
+            var transferFunction = contract.GetFunction("transfer");
+            
+            var gas = await transferFunction.EstimateGasAsync(senderAddress, null, null, rewardedSensorAddress, tokenAmount);
+
+            var transactionReceipt = await transferFunction.SendTransactionAndWaitForReceiptAsync(
+                senderAddress,
+                gas,
+                null,
+                null,
+                rewardedSensorAddress,
+                tokenAmount
+            );
+            
+            Console.WriteLine($"Transaction successful with receipt: {transactionReceipt}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+            throw;
+        }
+        
     }
 }

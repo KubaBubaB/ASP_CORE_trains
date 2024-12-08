@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using DotNET_ASP_App.DTOs;
 using DotNET_ASP_App.Repository;
+using DotNET_ASP_App.Service;
 using DotNET_ASP_App.WebSocket;
 using MQTTnet;
 
@@ -11,10 +12,12 @@ namespace DotNET_ASP_App.Queue;
 public class MQTTHandler
 {
     private readonly NotificationService _notificationService;
+    private readonly BlockchainService _blockchainService;
     
-    public MQTTHandler(NotificationService notificationService)
+    public MQTTHandler(NotificationService notificationService, BlockchainService blockchainService)
     {
         _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
+        _blockchainService = blockchainService ?? throw new ArgumentNullException(nameof(blockchainService));
     }
     
     public async Task Handle_Received_Application_Message()
@@ -102,6 +105,24 @@ public class MQTTHandler
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error notifying clients: {ex}");
+                }
+                
+                try
+                {
+                    Console.WriteLine("Attempting to reward sensor.");
+                    if (_blockchainService == null)
+                    {
+                        Console.WriteLine("_blockchainService is null.");
+                    }
+                    else
+                    {
+                        await _blockchainService.RewardSensor(sensorData.SensorId);
+                        Console.WriteLine($"Sensor {sensorData.SensorId} rewarded.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error rewarding sensor: {ex}");
                 }
 
             };
