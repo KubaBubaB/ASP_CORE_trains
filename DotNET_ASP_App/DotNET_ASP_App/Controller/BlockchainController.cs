@@ -36,19 +36,15 @@ public class BlockchainController : ControllerBase
     {
         try
         {
-            // var sensorBalance = await blockchainService.GetWalletsBalance();
-
             var sensorBalance = new GetAllWalletsBalance();
             sensorBalance.Balances = new List<GetAllWalletsBalance.WalletBalance>();
-
-            // TEMPORARY MOCK FOR FRONTEND 
-            var random = new Random();
+            
             for (int i = 0; i < 16; i++)
             {
                 sensorBalance.Balances.Add(new GetAllWalletsBalance.WalletBalance
                 {
                     Id = i,
-                    Balance = random.NextDouble()
+                    Balance = await blockchainService.GetBalance(i),
                 });
             }
 

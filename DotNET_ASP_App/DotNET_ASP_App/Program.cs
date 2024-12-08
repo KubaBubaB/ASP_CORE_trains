@@ -11,8 +11,6 @@ builder.Services.AddSingleton<SensorService>();
 builder.Services.AddSingleton<BlockchainService>();
 builder.Services.AddSingleton<WebSocketHandler>();
 builder.Services.AddSingleton<NotificationService>();
-builder.Services.AddSingleton<WebSocketHandler>();
-builder.Services.AddSingleton<NotificationService>();
 
 builder.Services.AddCors(options =>
 {
@@ -30,6 +28,7 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 var sensorService = app.Services.GetRequiredService<SensorService>();
+var blockchainService = app.Services.GetRequiredService<BlockchainService>();
 var sensorController = new SensorController(sensorService);
 var webSocketHandler = app.Services.GetRequiredService<WebSocketHandler>();
 var notificationService = app.Services.GetRequiredService<NotificationService>();
@@ -82,8 +81,11 @@ app.UseRouting();
 MongoDBHandler.GetClient();
 
 // Start the MQTT handler
-var mqttHandler = new MQTTHandler(notificationService);
-_ = Task.Run(async () => await mqttHandler.Handle_Received_Application_Message());
+var mqttSensorsHandler = new MQTTSensorsHandler(notificationService);
+_ = Task.Run(async () => await mqttSensorsHandler.Handle_Received_Application_Message());
+
+var mqttRewardsHandler = new MQTTRewardsHandler(blockchainService);
+_ = Task.Run(async () => await mqttRewardsHandler.Handle_Received_Application_Message());
 
 //ROUTING
 
